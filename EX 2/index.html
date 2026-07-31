@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern Analyzer — String Matching Terminal</title>
+    <style>
+        /* ============================================================
+   Design tokens
+   Palette: obsidian base, warm amber signal, cyan + violet duotone
+   ============================================================ */
+        :root {
+            --bg-0: #0a0c10;
+            --bg-1: #0f1319;
+            --surface: rgba(255, 255, 255, 0.035);
+            --surface-strong: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.09);
+            --border-strong: rgba(255, 255, 255, 0.16);
+
+            --text-hi: #eef1f6;
+            --text-mid: #9aa4b5;
+            --text-lo: #5c6577;
+
+            --c-amber: #f0a544;
+            --c-cyan: #4fd8e0;
+            --c-violet: #a78bfa;
+
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-0);
+            color: var(--text-hi);
+            font-family: var(--font-display);
+            min-height: 100vh;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 15% 0%, rgba(240, 165, 68, 0.07), transparent 45%),
+                radial-gradient(circle at 85% 20%, rgba(79, 216, 224, 0.06), transparent 40%),
+                linear-gradient(180deg, var(--bg-0), var(--bg-1) 60%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* subtle animated grid, quant-terminal feel */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 80%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 0;
+            align-items: start;
+            min-height: 100vh;
+        }
+
+        /* ============================================================
+   Console (sticky left rail): header + input live here
+   ============================================================ */
+        .console {
+            position: sticky;
+            top: 0;
+            align-self: start;
+            padding: 56px 32px 56px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 1px solid var(--border);
+        }
+
+        /* ============================================================
+   Header
+   ============================================================ */
+        header {
+            text-align: left;
+            margin-bottom: 40px;
+            animation: rise 0.7s var(--ease) both;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            color: var(--text-mid);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 6px 14px;
+            border-radius: 100px;
+            margin-bottom: 24px;
+        }
+
+        .eyebrow-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--c-amber);
+            box-shadow: 0 0 8px 1px var(--c-amber);
+            animation: pulse 2.2s ease-in-out infinite;
+        }
+
+        .title {
+            font-size: clamp(2.4rem, 6vw, 3.6rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
+            line-height: 1.05;
+        }
+
+        .title-accent {
+            background: linear-gradient(120deg, var(--c-amber), var(--c-cyan) 55%, var(--c-violet));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            background-size: 200% 100%;
+            animation: shift 6s ease-in-out infinite;
+        }
+
+        .subtitle {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-mid);
+            margin-top: 14px;
+            letter-spacing: 0.02em;
+        }
+
+        /* ============================================================
+   Input section
+   ============================================================ */
+        .input-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            animation: rise 0.7s var(--ease) 0.08s both;
+            box-shadow: 0 20px 60px -30px rgba(0, 0, 0, 0.6);
+        }
+
+        .input-group {
+            margin-bottom: 22px;
+        }
+
+        .input-group:last-of-type {
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-mid);
+            margin-bottom: 10px;
+        }
+
+        textarea,
+        input[type="text"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: var(--text-hi);
+            font-family: var(--font-mono);
+            font-size: 14.5px;
+            letter-spacing: 0.02em;
+            resize: vertical;
+            transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s var(--ease);
+        }
+
+        textarea:hover,
+        input[type="text"]:hover {
+            border-color: var(--border-strong);
+        }
+
+        textarea:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--c-amber);
+            background: rgba(0, 0, 0, 0.35);
+            box-shadow: 0 0 0 4px rgba(240, 165, 68, 0.12);
+        }
+
+        ::placeholder {
+            color: var(--text-lo);
+        }
+
+        .run-button {
+            position: relative;
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--c-amber), #d68a2e);
+            color: #14100a;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+            box-shadow: 0 8px 24px -8px rgba(240, 165, 68, 0.5);
+        }
+
+        .run-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px -8px rgba(240, 165, 68, 0.65);
+        }
+
+        .run-button:active {
+            transform: translateY(0px) scale(0.99);
+        }
+
+        .run-button-glow {
+            position: absolute;
+            top: 0;
+            left: -60%;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            transform: skewX(-20deg);
+            transition: left 0.6s var(--ease);
+        }
+
+        .run-button:hover .run-button-glow {
+            left: 130%;
+        }
+
+        /* ============================================================
+   Main panel (right side): results + table live here
+   ============================================================ */
+        .main-panel {
+            padding: 56px 0 96px 48px;
+            min-width: 0;
+        }
+
+        .main-panel .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 48px 0;
+            color: var(--text-lo);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            letter-spacing: 0.02em;
+            animation: rise 0.7s var(--ease) both;
+        }
+
+        .main-panel .empty-state strong {
+            color: var(--text-mid);
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+   Results cards
+   ============================================================ */
+        .results-section {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 0;
+        }
+
+        .results-section #card-kmp {
+            grid-column: 1 / -1;
+        }
+
+        .card {
+            --accent: var(--c-amber);
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            opacity: 0;
+            transform: translateY(16px);
+            animation: reveal 0.6s var(--ease) forwards;
+            transition: border-color 0.3s var(--ease), transform 0.3s var(--ease);
+        }
+
+        .card:hover {
+            border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+            transform: translateY(-4px);
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 18px;
+            padding: 1px;
+            background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 40%, transparent), transparent 60%);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        #card-naive {
+            animation-delay: 0.05s;
+        }
+
+        #card-rk {
+            animation-delay: 0.18s;
+        }
+
+        #card-kmp {
+            animation-delay: 0.31s;
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .card h2 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-hi);
+        }
+
+        .card-tag {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 14%, transparent);
+            border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+            padding: 3px 9px;
+            border-radius: 100px;
+        }
+
+        .card-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .card-row:first-of-type {
+            border-top: none;
+        }
+
+        .card-label {
+            font-size: 12.5px;
+            color: var(--text-mid);
+        }
+
+        .output {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--text-hi);
+            font-weight: 500;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .glow-text {
+            color: var(--accent);
+            text-shadow: 0 0 16px color-mix(in srgb, var(--accent) 55%, transparent);
+        }
+
+        /* ============================================================
+   Table
+   ============================================================ */
+        .table-section {
+            margin-top: 48px;
+            animation: rise 0.6s var(--ease) both;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-family: var(--font-mono);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-mid);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .table-responsive {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        thead th {
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-mid);
+            font-weight: 500;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody td {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-hi);
+            font-family: var(--font-mono);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background 0.2s var(--ease);
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* ============================================================
+   Utility / animation keyframes
+   ============================================================ */
+        .hidden {
+            display: none;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes reveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
+        }
+
+        @keyframes shift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* ============================================================
+   Responsive
+   ============================================================ */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+            }
+
+            .console {
+                position: relative;
+                top: auto;
+                min-height: 0;
+                padding: 48px 0 32px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .main-panel {
+                padding: 40px 0 72px;
+            }
+
+            .results-section,
+            .results-section #card-kmp {
+                grid-column: auto;
+            }
+
+            .results-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .input-section {
+                padding: 22px;
+            }
+        }
+
+        /* Visible keyboard focus */
+        button:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible {
+            outline: 2px solid var(--c-cyan);
+            outline-offset: 2px;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="noise-overlay"></div>
+    <div class="container">
+        <div class="console">
+            <header>
+                <div class="eyebrow">
+                    <span class="eyebrow-dot"></span>
+                    PATTERN&nbsp;MATCHING&nbsp;ENGINE
+                </div>
+                <h1 class="title">
+                    String <span class="title-accent">Matcher</span>
+                </h1>
+                <p class="subtitle">Naive&nbsp;Search &nbsp;·&nbsp; Rabin–Karp &nbsp;·&nbsp; Knuth–Morris–Pratt</p>
+            </header>
+
+            <section class="input-section">
+                <div class="input-group">
+                    <label for="text-input">Target Text</label>
+                    <textarea id="text-input" rows="4"
+                        placeholder="Enter the main text here...">ABABDABACDABABCABAB</textarea>
+                </div>
+                <div class="input-group">
+                    <label for="pattern-input">Pattern to Find</label>
+                    <input type="text" id="pattern-input" placeholder="e.g., ABABCABAB" value="ABABCABAB">
+                </div>
+                <button id="run-btn" class="run-button">
+                    <span class="run-button-label">Run Analysis</span>
+                    <span class="run-button-glow"></span>
+                </button>
+            </section>
+        </div>
+
+        <div class="main-panel">
+            <div class="empty-state" id="empty-state">
+                <strong>No analysis yet</strong>
+                <span>Enter a target text and pattern on the left, then run the analysis to compare all three algorithms
+                    side by side.</span>
+            </div>
+
+            <section class="results-section hidden" id="results-container">
+                <div class="card" id="card-naive" style="--accent: var(--c-amber);">
+                    <div class="card-head">
+                        <h2>Naive Search</h2>
+                        <span class="card-tag">O(n·m)</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Matches at index</span>
+                        <span class="matches output"></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Comparisons made</span>
+                        <span class="comparisons output glow-text"></span>
+                    </div>
+                </div>
+
+                <div class="card" id="card-rk" style="--accent: var(--c-cyan);">
+                    <div class="card-head">
+                        <h2>Rabin–Karp</h2>
+                        <span class="card-tag">O(n+m)&nbsp;avg</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Matches at index</span>
+                        <span class="matches output"></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Comparisons made</span>
+                        <span class="comparisons output glow-text"></span>
+                    </div>
+                </div>
+
+                <div class="card" id="card-kmp" style="--accent: var(--c-violet);">
+                    <div class="card-head">
+                        <h2>KMP Algorithm</h2>
+                        <span class="card-tag">O(n+m)</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Matches at index</span>
+                        <span class="matches output"></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Comparisons made</span>
+                        <span class="comparisons output glow-text"></span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="table-section hidden" id="table-container">
+                <h2 class="section-title">Performance Comparison</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Algorithm</th>
+                                <th>Time Complexity (Worst)</th>
+                                <th>Actual Comparisons</th>
+                                <th>Matches Found</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script>
+        // ============================================================
+        // String matching algorithms
+        // ============================================================
+
+        function naiveSearch(text, pattern) {
+            const matches = [];
+            let comparisons = 0;
+            const n = text.length, m = pattern.length;
+
+            for (let i = 0; i <= n - m; i++) {
+                let j = 0;
+                while (j < m) {
+                    comparisons++;
+                    if (text[i + j] !== pattern[j]) break;
+                    j++;
+                }
+                if (j === m) matches.push(i);
+            }
+            return { matches, comparisons };
+        }
+
+        function rabinKarpSearch(text, pattern) {
+            const matches = [];
+            let comparisons = 0;
+            const n = text.length, m = pattern.length;
+            if (m === 0 || m > n) return { matches, comparisons };
+
+            const base = 256;
+            const prime = 101;
+
+            let patternHash = 0;
+            let textHash = 0;
+            let h = 1;
+
+            for (let i = 0; i < m - 1; i++) h = (h * base) % prime;
+
+            for (let i = 0; i < m; i++) {
+                patternHash = (base * patternHash + pattern.charCodeAt(i)) % prime;
+                textHash = (base * textHash + text.charCodeAt(i)) % prime;
+            }
+
+            for (let i = 0; i <= n - m; i++) {
+                comparisons++; // hash comparison
+                if (patternHash === textHash) {
+                    let j = 0;
+                    while (j < m) {
+                        comparisons++;
+                        if (text[i + j] !== pattern[j]) break;
+                        j++;
+                    }
+                    if (j === m) matches.push(i);
+                }
+                if (i < n - m) {
+                    textHash = (base * (textHash - text.charCodeAt(i) * h) + text.charCodeAt(i + m)) % prime;
+                    if (textHash < 0) textHash += prime;
+                }
+            }
+            return { matches, comparisons };
+        }
+
+        function buildLPS(pattern) {
+            const m = pattern.length;
+            const lps = new Array(m).fill(0);
+            let len = 0, i = 1;
+            while (i < m) {
+                if (pattern[i] === pattern[len]) {
+                    len++;
+                    lps[i] = len;
+                    i++;
+                } else if (len !== 0) {
+                    len = lps[len - 1];
+                } else {
+                    lps[i] = 0;
+                    i++;
+                }
+            }
+            return lps;
+        }
+
+        function kmpSearch(text, pattern) {
+            const matches = [];
+            let comparisons = 0;
+            const n = text.length, m = pattern.length;
+            if (m === 0) return { matches, comparisons };
+
+            const lps = buildLPS(pattern);
+            let i = 0, j = 0;
+
+            while (i < n) {
+                comparisons++;
+                if (text[i] === pattern[j]) {
+                    i++; j++;
+                    if (j === m) {
+                        matches.push(i - j);
+                        j = lps[j - 1];
+                    }
+                } else if (j !== 0) {
+                    j = lps[j - 1];
+                } else {
+                    i++;
+                }
+            }
+            return { matches, comparisons };
+        }
+
+        // ============================================================
+        // UI wiring
+        // ============================================================
+
+        const runBtn = document.getElementById('run-btn');
+        const textInput = document.getElementById('text-input');
+        const patternInput = document.getElementById('pattern-input');
+        const resultsContainer = document.getElementById('results-container');
+        const tableContainer = document.getElementById('table-container');
+        const tableBody = document.getElementById('table-body');
+
+        function formatMatches(matches) {
+            return matches.length ? matches.join(', ') : 'none';
+        }
+
+        function fillCard(cardId, result) {
+            const card = document.getElementById(cardId);
+            card.querySelector('.matches').textContent = formatMatches(result.matches);
+            card.querySelector('.comparisons').textContent = result.comparisons;
+        }
+
+        function replayCardAnimation() {
+            ['card-naive', 'card-rk', 'card-kmp'].forEach((id, idx) => {
+                const card = document.getElementById(id);
+                card.style.animation = 'none';
+                // force reflow to restart animation
+                void card.offsetWidth;
+                card.style.animation = `reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.05 + idx * 0.13}s forwards`;
+            });
+        }
+
+        function runAnalysis() {
+            const text = textInput.value;
+            const pattern = patternInput.value;
+
+            if (!pattern) {
+                patternInput.focus();
+                return;
+            }
+
+            const naive = naiveSearch(text, pattern);
+            const rk = rabinKarpSearch(text, pattern);
+            const kmp = kmpSearch(text, pattern);
+
+            fillCard('card-naive', naive);
+            fillCard('card-rk', rk);
+            fillCard('card-kmp', kmp);
+
+            tableBody.innerHTML = `
+        <tr>
+            <td>Naive Search</td>
+            <td>O(n·m)</td>
+            <td>${naive.comparisons}</td>
+            <td>${formatMatches(naive.matches)}</td>
+        </tr>
+        <tr>
+            <td>Rabin–Karp</td>
+            <td>O(n·m) worst / O(n+m) avg</td>
+            <td>${rk.comparisons}</td>
+            <td>${formatMatches(rk.matches)}</td>
+        </tr>
+        <tr>
+            <td>KMP Algorithm</td>
+            <td>O(n+m)</td>
+            <td>${kmp.comparisons}</td>
+            <td>${formatMatches(kmp.matches)}</td>
+        </tr>
+    `;
+
+            document.getElementById('empty-state').classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            tableContainer.classList.remove('hidden');
+            replayCardAnimation();
+
+            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        runBtn.addEventListener('click', runAnalysis);
+
+        [textInput, patternInput].forEach(el => {
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    runAnalysis();
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>

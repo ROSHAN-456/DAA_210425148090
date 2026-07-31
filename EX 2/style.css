@@ -1,0 +1,197 @@
+:root {
+    --bg-color: #050510;
+    --text-color: #e0e0e0;
+    --neon-blue: #00f3ff;
+    --neon-pink: #ff00ea;
+    --neon-green: #39ff14;
+    --glass-bg: rgba(20, 20, 30, 0.7);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Fira Code', monospace;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    background-image: radial-gradient(circle at center, #1a1a2e 0%, var(--bg-color) 100%);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Typography & Neon Effects */
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.neon-title {
+    font-size: 3rem;
+    color: #fff;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--neon-pink), 0 0 40px var(--neon-pink);
+    letter-spacing: 2px;
+}
+
+.neon-title.small {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 5px #fff, 0 0 10px var(--neon-blue);
+}
+
+.flicker {
+    animation: flicker 1.5s infinite alternate;
+}
+
+.subtitle {
+    color: var(--neon-blue);
+    margin-top: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.neon-blue { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+.neon-pink { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
+.neon-green { color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
+
+/* Inputs */
+.input-section {
+    background: var(--glass-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+    margin-bottom: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 0.5rem;
+    color: var(--neon-blue);
+}
+
+textarea, input[type="text"] {
+    background: transparent;
+    border: 1px solid var(--neon-blue);
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+textarea:focus, input[type="text"]:focus {
+    box-shadow: 0 0 10px var(--neon-blue) inset, 0 0 10px var(--neon-blue);
+}
+
+.neon-button {
+    background: transparent;
+    color: var(--neon-pink);
+    border: 2px solid var(--neon-pink);
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    border-radius: 5px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+}
+
+.neon-button:hover {
+    background: var(--neon-pink);
+    color: var(--bg-color);
+    box-shadow: 0 0 20px var(--neon-pink);
+}
+
+/* Results Cards */
+.results-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.card {
+    background: var(--glass-bg);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+#card-naive { border-bottom: 3px solid var(--neon-blue); }
+#card-rk { border-bottom: 3px solid var(--neon-pink); }
+#card-kmp { border-bottom: 3px solid var(--neon-green); }
+
+.output {
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Table */
+.table-section {
+    background: var(--glass-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th, td {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+th {
+    color: var(--neon-pink);
+    text-transform: uppercase;
+}
+
+/* Animations */
+.hidden { display: none !important; }
+
+.pulse-animate {
+    animation: pulse 0.5s ease-out;
+}
+
+@keyframes flicker {
+    0%, 18%, 22%, 25%, 53%, 57%, 100% { text-shadow: 0 0 5px #fff, 0 0 20px var(--neon-pink); opacity: 1; }
+    20%, 24%, 55% { text-shadow: none; opacity: 0.5; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.05); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+    .neon-title { font-size: 2rem; }
+    .input-section, .table-section { padding: 1rem; }
+}
