@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpolation Search Visualizer</title>
+    <style>
+        /* CSS Variables for Dark + Neon Theme */
+        :root {
+            --bg-color: #0f0f13;
+            --panel-bg: rgba(25, 25, 35, 0.8);
+            --text-main: #ffffff;
+            --text-muted: #a0a0b5;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --neon-red: #ff3333;
+            --border-radius: 10px;
+        }
+
+        /* Base Resets & Typography */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--neon-blue);
+            color: var(--neon-blue);
+        }
+
+        /* Glassmorphism Panels */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Controls Layout */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 5px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        button.primary {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+        }
+
+        button.primary:hover {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        button.danger {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        button.danger:hover {
+            background: var(--neon-pink);
+            color: var(--bg-color);
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        /* Sliders */
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--neon-blue);
+        }
+
+        /* Error Banner */
+        #error-msg {
+            color: var(--neon-red);
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+            text-shadow: 0 0 5px var(--neon-red);
+        }
+
+        /* Visualization Area */
+        .visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            min-height: 150px;
+            padding: 40px 10px;
+            gap: 8px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+
+        .array-item-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .box {
+            width: 45px;
+            height: 45px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .index-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .pointer {
+            font-size: 12px;
+            font-weight: bold;
+            position: absolute;
+            top: -25px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        /* Highlights */
+        .box.low {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue);
+            transform: translateY(-5px);
+        }
+
+        .pointer.low {
+            opacity: 1;
+            color: var(--neon-blue);
+        }
+
+        .box.high {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+            transform: translateY(-5px);
+        }
+
+        .pointer.high {
+            opacity: 1;
+            color: var(--neon-pink);
+        }
+
+        .box.pos {
+            background: rgba(255, 255, 0, 0.2);
+            border-color: #ffff00;
+            box-shadow: 0 0 15px #ffff00;
+            transform: scale(1.1);
+        }
+
+        .pointer.pos {
+            opacity: 1;
+            color: #ffff00;
+            top: -45px;
+        }
+
+        /* Stacked above high/low if overlapping */
+
+        .box.found {
+            background: rgba(57, 255, 20, 0.2);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 20px var(--neon-green);
+            transform: scale(1.2);
+        }
+
+        .box.dimmed {
+            opacity: 0.3;
+        }
+
+        /* Explanation Panel */
+        .explanation {
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--neon-blue);
+            min-height: 120px;
+        }
+
+        .explanation p {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .highlight-math {
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .highlight-success {
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        .highlight-fail {
+            color: var(--neon-red);
+            font-weight: bold;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .box {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+
+            .visualizer {
+                justify-content: flex-start;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-group {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Interpolation Search Visualizer</h1>
+
+    <div class="panel">
+        <div class="controls">
+            <div class="input-group">
+                <label for="array-input">Sorted Array (comma-separated):</label>
+                <input type="text" id="array-input" value="2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24">
+            </div>
+            <div class="input-group">
+                <label for="target-input">Target Value:</label>
+                <input type="number" id="target-input" value="16">
+            </div>
+        </div>
+
+        <div id="error-msg">Error: Array must be sorted in ascending order!</div>
+
+        <div class="controls" style="margin-top: 15px;">
+            <div class="btn-group">
+                <button class="primary" id="btn-start" onclick="initSearch()">Start Search</button>
+                <button id="btn-pause" onclick="togglePause()">Pause</button>
+                <button class="danger" onclick="resetVisualizer()">Reset</button>
+                <button onclick="generateRandomArray()">Random Array</button>
+            </div>
+
+            <div class="slider-group">
+                <label for="speed-slider">Speed:</label>
+                <input type="range" id="speed-slider" min="1" max="100" value="70">
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="visualizer" id="visualizer-container">
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="explanation" id="explanation-box">
+            <p>Welcome to Interpolation Search Visualizer.</p>
+            <p>Enter an array and a target, then click "Start Search".</p>
+        </div>
+        <div class="stats">
+            <span id="stat-iterations">Iterations: 0</span>
+            <span id="stat-comparisons">Comparisons: 0</span>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let currentArray = [];
+        let targetValue = null;
+        let isSearching = false;
+        let isPaused = false;
+        let abortController = null;
+        let comparisons = 0;
+        let iterations = 0;
+
+        // --- Audio Context Setup ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'tick') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'found') {
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'error') {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // --- Utility Functions ---
+        async function sleep() {
+            const speedSlider = document.getElementById('speed-slider').value;
+            // Map slider (1-100) to delay (1500ms to 50ms)
+            const ms = 1500 - (speedSlider * 14.5);
+
+            while (isPaused) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            await new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function isSorted(arr) {
+            for (let i = 0; i < arr.length - 1; i++) {
+                if (arr[i] > arr[i + 1]) return false;
+            }
+            return true;
+        }
+
+        function updateExplanation(htmlContent) {
+            document.getElementById('explanation-box').innerHTML = htmlContent;
+        }
+
+        function updateStats() {
+            document.getElementById('stat-iterations').innerText = `Iterations: ${iterations}`;
+            document.getElementById('stat-comparisons').innerText = `Comparisons: ${comparisons}`;
+        }
+
+        // --- UI Rendering ---
+        function renderArray() {
+            const container = document.getElementById('visualizer-container');
+            container.innerHTML = '';
+
+            currentArray.forEach((value, index) => {
+                const itemContainer = document.createElement('div');
+                itemContainer.className = 'array-item-container';
+                itemContainer.id = `container-${index}`;
+
+                const pointerLabel = document.createElement('div');
+                pointerLabel.className = 'pointer';
+                pointerLabel.id = `pointer-${index}`;
+
+                const box = document.createElement('div');
+                box.className = 'box';
+                box.id = `box-${index}`;
+                box.innerText = value;
+
+                const indexLabel = document.createElement('div');
+                indexLabel.className = 'index-label';
+                indexLabel.innerText = index;
+
+                itemContainer.appendChild(pointerLabel);
+                itemContainer.appendChild(box);
+                itemContainer.appendChild(indexLabel);
+                container.appendChild(itemContainer);
+            });
+        }
+
+        function clearHighlights() {
+            const boxes = document.querySelectorAll('.box');
+            const pointers = document.querySelectorAll('.pointer');
+            boxes.forEach(box => {
+                box.classList.remove('low', 'high', 'pos', 'found', 'dimmed');
+            });
+            pointers.forEach(ptr => {
+                ptr.classList.remove('low', 'high', 'pos');
+                ptr.innerText = '';
+            });
+        }
+
+        function dimOutside(low, high) {
+            currentArray.forEach((_, index) => {
+                const box = document.getElementById(`box-${index}`);
+                if (index < low || index > high) {
+                    box.classList.add('dimmed');
+                } else {
+                    box.classList.remove('dimmed');
+                }
+            });
+        }
+
+        function setHighlight(index, type, labelText) {
+            if (index < 0 || index >= currentArray.length) return;
+            const box = document.getElementById(`box-${index}`);
+            const pointer = document.getElementById(`pointer-${index}`);
+
+            box.classList.add(type);
+            pointer.classList.add(type);
+
+            // Append text if multiple pointers land on the same index
+            if (pointer.innerText && pointer.innerText !== labelText) {
+                pointer.innerText += ` / ${labelText}`;
+            } else {
+                pointer.innerText = labelText;
+            }
+        }
+
+        // --- Pre-Search Setup ---
+        function parseInput() {
+            const rawStr = document.getElementById('array-input').value;
+            const arr = rawStr.split(',').map(item => parseInt(item.trim())).filter(item => !isNaN(item));
+
+            const errorMsg = document.getElementById('error-msg');
+            if (!isSorted(arr)) {
+                errorMsg.style.display = 'block';
+                playSound('error');
+                return null;
+            }
+            errorMsg.style.display = 'none';
+
+            const target = parseInt(document.getElementById('target-input').value);
+            if (isNaN(target)) {
+                alert("Please enter a valid target number.");
+                return null;
+            }
+
+            return { arr, target };
+        }
+
+        function generateRandomArray() {
+            if (isSearching) return;
+            let arr = [];
+            let current = Math.floor(Math.random() * 10) + 1;
+            const length = Math.floor(Math.random() * 10) + 10; // 10 to 20 elements
+
+            for (let i = 0; i < length; i++) {
+                arr.push(current);
+                // Linear-ish distribution favors interpolation search
+                current += Math.floor(Math.random() * 5) + 2;
+            }
+
+            document.getElementById('array-input').value = arr.join(', ');
+            // Pick a random element from the array to be the target (80% chance), or a random missing number (20%)
+            if (Math.random() > 0.2) {
+                document.getElementById('target-input').value = arr[Math.floor(Math.random() * arr.length)];
+            } else {
+                document.getElementById('target-input').value = arr[Math.floor(Math.random() * arr.length)] + 1;
+            }
+
+            resetVisualizer();
+        }
+
+        function togglePause() {
+            if (!isSearching) return;
+            isPaused = !isPaused;
+            document.getElementById('btn-pause').innerText = isPaused ? "Resume" : "Pause";
+        }
+
+        function resetVisualizer() {
+            isSearching = false;
+            isPaused = false;
+            iterations = 0;
+            comparisons = 0;
+            document.getElementById('btn-pause').innerText = "Pause";
+            document.getElementById('btn-start').disabled = false;
+
+            const data = parseInput();
+            if (data) {
+                currentArray = data.arr;
+                renderArray();
+                updateExplanation("<p>System Reset. Ready to start.</p>");
+                updateStats();
+            }
+        }
+
+        // --- Core Algorithm Logic & Animation ---
+        async function initSearch() {
+            if (isSearching) return;
+
+            const data = parseInput();
+            if (!data) return;
+
+            currentArray = data.arr;
+            targetValue = data.target;
+            isSearching = true;
+            isPaused = false;
+            iterations = 0;
+            comparisons = 0;
+
+            document.getElementById('btn-start').disabled = true;
+            renderArray();
+            updateStats();
+
+            await interpolationSearch(currentArray, targetValue);
+
+            isSearching = false;
+            document.getElementById('btn-start').disabled = false;
+        }
+
+        // EXACT LOGIC ADAPTED FOR VISUALIZATION
+        async function interpolationSearch(arr, target) {
+            let low = 0;
+            let high = arr.length - 1;
+
+            updateExplanation(`<p>Starting search for Target: <span class="highlight-math">${target}</span></p>
+                               <p>Initial bounds: low = ${low}, high = ${high}</p>`);
+            await sleep();
+
+            while (low <= high && target >= arr[low] && target <= arr[high]) {
+                iterations++;
+                comparisons += 3; // roughly 3 comparisons in the while condition
+                updateStats();
+
+                clearHighlights();
+                dimOutside(low, high);
+                setHighlight(low, 'low', 'Low');
+                setHighlight(high, 'high', 'High');
+                playSound('tick');
+
+                updateExplanation(`<p>Current bounds valid. Calculating estimated position (pos):</p>
+                                   <p>pos = low + Math.floor(((high - low) / (arr[high] - arr[low])) * (target - arr[low]))</p>
+                                   <p>pos = ${low} + Math.floor(((${high} - ${low}) / (${arr[high]} - ${arr[low]})) * (${target} - ${arr[low]}))</p>`);
+                await sleep();
+
+                let pos = low + Math.floor(
+                    ((high - low) / (arr[high] - arr[low])) * (target - arr[low])
+                );
+
+                setHighlight(pos, 'pos', 'Pos');
+                updateExplanation(`<p>Calculated <span class="highlight-math">pos = ${pos}</span>. Checking arr[pos] (${arr[pos]})...</p>`);
+                playSound('tick');
+                await sleep();
+
+                comparisons++;
+                updateStats();
+                if (arr[pos] === target) {
+                    clearHighlights();
+                    setHighlight(pos, 'found', 'Found!');
+                    dimOutside(pos, pos);
+                    playSound('found');
+                    updateExplanation(`<p class="highlight-success">Element found at index ${pos}!</p>
+                                       <p>arr[${pos}] === ${target}</p>`);
+                    return pos;
+                }
+
+                comparisons++;
+                updateStats();
+                if (arr[pos] < target) {
+                    updateExplanation(`<p>arr[${pos}] (${arr[pos]}) < target (${target}).</p>
+                                       <p>Target must be to the <b>right</b>. Updating low = pos + 1 = ${pos + 1}</p>`);
+                    low = pos + 1;
+                } else {
+                    updateExplanation(`<p>arr[${pos}] (${arr[pos]}) > target (${target}).</p>
+                                       <p>Target must be to the <b>left</b>. Updating high = pos - 1 = ${pos - 1}</p>`);
+                    high = pos - 1;
+                }
+                await sleep();
+            }
+
+            // Loop termination conditions handled
+            clearHighlights();
+            playSound('error');
+
+            let reason = "";
+            if (low > high) reason = `low (${low}) > high (${high})`;
+            else if (target < arr[low]) reason = `target (${target}) < arr[low] (${arr[low]})`;
+            else if (target > arr[high]) reason = `target (${target}) > arr[high] (${arr[high]})`;
+
+            updateExplanation(`<p class="highlight-fail">Element ${target} not found in the array.</p>
+                               <p>Loop terminated because: ${reason}</p>`);
+            return -1;
+        }
+
+        // Initialize view on load
+        window.onload = resetVisualizer;
+    </script>
+</body>
+
+</html>
