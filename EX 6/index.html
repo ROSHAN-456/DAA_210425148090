@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Matrix Optimizer — DP Energy Reactor</title>
+<meta name="description" content="A cinematic AI reactor that visualizes Matrix Chain Multiplication via Dynamic Programming.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= AMBIENT BACKGROUND ================= -->
+<div class="bg-layer">
+  <div class="lava-river"></div>
+  <div class="lava-cracks"></div>
+  <div class="smoke-layer"></div>
+  <div class="holo-grid"></div>
+  <div class="ember-field" id="ember-field-global"></div>
+</div>
+
+<!-- ================= NAVBAR ================= -->
+<header class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <span class="logo-mark">◈</span>
+      <span class="logo-text">AI MATRIX <b>OPTIMIZER</b></span>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    <nav class="nav-menu" id="nav-menu">
+      <a href="#hero" class="nav-link">Home</a>
+      <a href="#input" class="nav-link">Matrix Input</a>
+      <a href="#visualization" class="nav-link">Visualization</a>
+      <a href="#dp-table-section" class="nav-link">DP Table</a>
+      <a href="#analytics" class="nav-link">Analytics</a>
+      <a href="#applications" class="nav-link">Applications</a>
+      <a href="#about" class="nav-link">About</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= HERO ================= -->
+<section id="hero" class="hero">
+  <div class="hero-core">
+    <div class="core-ring core-ring-1"></div>
+    <div class="core-ring core-ring-2"></div>
+    <div class="core-ring core-ring-3"></div>
+    <div class="core-orb"></div>
+  </div>
+  <div class="hero-content">
+    <div class="eyebrow">DYNAMIC PROGRAMMING ENGINE</div>
+    <h1 class="hero-title">AI MATRIX<br><span>OPTIMIZER</span></h1>
+    <p class="hero-subtitle">Dynamic Programming Engine for Matrix Chain Multiplication</p>
+    <p class="hero-desc">Optimize matrix multiplication using artificial intelligence and visualize every Dynamic Programming decision through an immersive holographic simulation.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" id="hero-start">▶ Initialize Optimization</button>
+      <button class="btn btn-ghost" id="hero-learn">📖 Learn Dynamic Programming</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INPUT PANEL ================= -->
+<section id="input" class="section">
+  <div class="section-head">
+    <div class="section-eyebrow">STAGE 01</div>
+    <h2>Matrix Input</h2>
+    <p>Define your chain of energy modules by entering matrix dimensions.</p>
+  </div>
+
+  <div class="glass-panel input-panel" id="dims-input-wrap">
+    <label class="input-label" for="dims-input">Dimension sequence (e.g. 10,30,5,60,10)</label>
+    <div class="input-row">
+      <input type="text" id="dims-input" class="holo-input" placeholder="10,30,5,60,10" autocomplete="off">
+      <button class="btn btn-small btn-primary" id="btn-apply">Apply</button>
+    </div>
+    <div class="input-actions">
+      <button class="btn btn-small btn-ghost" id="btn-load-sample">Load Sample</button>
+      <button class="btn btn-small btn-ghost" id="btn-random">Generate Random</button>
+      <button class="btn btn-small btn-danger-ghost" id="btn-reset">Reset</button>
+    </div>
+    <div class="preview-table" id="preview-table"></div>
+  </div>
+</section>
+
+<!-- ================= ENERGY MODULES / VISUALIZATION ================= -->
+<section id="visualization" class="section">
+  <div class="section-head">
+    <div class="section-eyebrow">STAGE 02</div>
+    <h2>Energy Module Visualization</h2>
+    <p>Each matrix is a floating holographic energy module, ready for fusion.</p>
+  </div>
+
+  <div class="modules-stage">
+    <div class="fusion-layer" id="fusion-layer"></div>
+    <div class="modules-track" id="modules-track"></div>
+  </div>
+
+  <div class="glass-panel control-panel">
+    <div class="control-buttons">
+      <button class="ctrl-btn ctrl-primary" id="btn-launch" title="Launch">▶ <span>Launch</span></button>
+      <button class="ctrl-btn" id="btn-pause" title="Pause">⏸ <span>Pause</span></button>
+      <button class="ctrl-btn" id="btn-prev" title="Previous Step">⏮ <span>Prev</span></button>
+      <button class="ctrl-btn" id="btn-next" title="Next Step">⏭ <span>Next</span></button>
+      <button class="ctrl-btn" id="btn-autoplay" title="Auto Play">🎥 <span>Auto</span></button>
+      <button class="ctrl-btn" id="btn-restart" title="Restart">🔄 <span>Restart</span></button>
+    </div>
+    <div class="speed-control">
+      <span>⚡ Speed</span>
+      <input type="range" id="speed-slider" min="0.25" max="4" step="0.25" value="1">
+      <span id="speed-value">1.0×</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="progress-label" id="progress-label">0% • step 0 / 0</div>
+  </div>
+
+  <div class="grid-2col">
+    <div class="glass-panel live-panel" id="live-panel">
+      <h3 class="panel-title">Live AI Analysis</h3>
+      <div class="live-grid">
+        <div class="live-item"><span>Current Stage</span><b id="live-stage">Standby</b></div>
+        <div class="live-item"><span>Chain Length</span><b id="live-chainLength">—</b></div>
+        <div class="live-item"><span>Current Cell</span><b id="live-currentCell">—</b></div>
+        <div class="live-item"><span>Current Split</span><b id="live-currentSplit">—</b></div>
+        <div class="live-item"><span>Current Cost</span><b id="live-currentCost">—</b></div>
+        <div class="live-item"><span>Minimum Cost</span><b id="live-minCost">—</b></div>
+        <div class="live-item"><span>Matrices Combined</span><b id="live-matricesCombined">—</b></div>
+        <div class="live-item"><span>Operations Completed</span><b id="live-opsCompleted">0</b></div>
+      </div>
+    </div>
+
+    <div class="glass-panel step-panel">
+      <h3 class="panel-title">Step Explanation</h3>
+      <div class="step-log" id="step-explanation"></div>
+    </div>
+  </div>
+
+  <div class="glass-panel mission-log-panel">
+    <h3 class="panel-title">Mission Log</h3>
+    <div class="mission-log" id="mission-log"></div>
+  </div>
+</section>
+
+<!-- ================= DP TABLE ================= -->
+<section id="dp-table-section" class="section">
+  <div class="section-head">
+    <div class="section-eyebrow">STAGE 03</div>
+    <h2>Dynamic Programming Table</h2>
+    <p>Every cell glows as the AI core evaluates and commits its optimal decisions.</p>
+  </div>
+  <div class="glass-panel dp-table-panel">
+    <div class="dp-table-body">
+      <aside class="dp-rail dp-rail-left">
+        <div class="dp-rail-label">LIVE METRICS</div>
+        <div class="dp-rail-stat"><span>Stage</span><b id="dpstat-stage">Standby</b></div>
+        <div class="dp-rail-stat"><span>Chain Length</span><b id="dpstat-chainLength">—</b></div>
+        <div class="dp-rail-stat"><span>Current Cell</span><b id="dpstat-currentCell">—</b></div>
+        <div class="dp-rail-stat"><span>Current Cost</span><b id="dpstat-currentCost">—</b></div>
+      </aside>
+
+      <div class="dp-table-scroll">
+        <div id="dp-table"></div>
+      </div>
+
+      <aside class="dp-rail dp-rail-right">
+        <div class="dp-rail-label">CORE STATUS</div>
+        <div class="dp-rail-stat"><span>Minimum Cost</span><b id="dpstat-minCost">—</b></div>
+        <div class="dp-rail-stat"><span>Matrices Combined</span><b id="dpstat-matricesCombined">—</b></div>
+        <div class="dp-rail-stat"><span>Operations</span><b id="dpstat-opsCompleted">0</b></div>
+      </aside>
+    </div>
+    <div class="dp-legend">
+      <span><i class="dot dot-processing"></i> Processing</span>
+      <span><i class="dot dot-optimal"></i> Optimal</span>
+      <span><i class="dot dot-rejected"></i> Rejected</span>
+      <span><i class="dot dot-inactive"></i> Inactive</span>
+    </div>
+  </div>
+
+  <div class="glass-panel tree-panel">
+    <h3 class="panel-title">Parenthesization Tree</h3>
+    <div id="tree-container" class="tree-container">
+      <div class="tree-placeholder">Run the optimization to grow the parenthesization tree.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PERFORMANCE DASHBOARD ================= -->
+<section id="performance" class="section">
+  <div class="section-head">
+    <div class="section-eyebrow">STAGE 04</div>
+    <h2>Performance Dashboard</h2>
+    <p>Mission results, distilled into holographic readouts.</p>
+  </div>
+  <div class="dashboard-grid">
+    <div class="dash-card"><span class="dash-label">Minimum Scalar Multiplications</span><span class="dash-value" id="dash-min-cost">—</span></div>
+    <div class="dash-card"><span class="dash-label">Optimal Parenthesization</span><span class="dash-value dash-value-small" id="dash-order">—</span></div>
+    <div class="dash-card"><span class="dash-label">Execution Time</span><span class="dash-value" id="dash-time">—</span></div>
+    <div class="dash-card"><span class="dash-label">Efficiency Score</span><span class="dash-value" id="dash-efficiency">—</span></div>
+    <div class="dash-card"><span class="dash-label">Memory Usage</span><span class="dash-value" id="dash-memory">—</span></div>
+    <div class="dash-card"><span class="dash-label">Matrices Processed</span><span class="dash-value" id="dash-matrices">—</span></div>
+  </div>
+</section>
+
+<!-- ================= ANALYTICS ================= -->
+<section id="analytics" class="section">
+  <div class="section-head">
+    <div class="section-eyebrow">STAGE 05</div>
+    <h2>Analytics</h2>
+    <p>Deep telemetry from the optimization core.</p>
+  </div>
+  <div class="analytics-grid">
+    <div class="glass-panel chart-card">
+      <h3 class="panel-title">Split Cost per Evaluation</h3>
+      <div class="chart-wrap"><canvas id="chart-cost"></canvas></div>
+    </div>
+    <div class="glass-panel chart-card">
+      <h3 class="panel-title">Optimization Progress</h3>
+      <div class="chart-wrap"><canvas id="chart-progress"></canvas></div>
+    </div>
+    <div class="glass-panel chart-card">
+      <h3 class="panel-title">Algorithm Efficiency</h3>
+      <div class="chart-wrap"><canvas id="chart-radar"></canvas></div>
+    </div>
+    <div class="glass-panel chart-card">
+      <h3 class="panel-title">Accepted vs Rejected Splits</h3>
+      <div class="chart-wrap"><canvas id="chart-pie"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMPLEXITY ================= -->
+<section id="complexity" class="section">
+  <div class="section-head">
+    <div class="section-eyebrow">CORE THEORY</div>
+    <h2>Complexity Analysis</h2>
+    <p>Why the AI core never repeats a computation it has already solved.</p>
+  </div>
+  <div class="grid-2col">
+    <div class="glass-panel complexity-card">
+      <h3 class="panel-title">Time Complexity — O(n³)</h3>
+      <p>The reactor evaluates every chain length, every starting index, and every split point — three nested decisions that scale cubically with the number of energy modules.</p>
+      <div class="complexity-bars">
+        <div class="cbar" style="--w:30%">n</div>
+        <div class="cbar" style="--w:55%">n²</div>
+        <div class="cbar cbar-active" style="--w:95%">n³</div>
+      </div>
+    </div>
+    <div class="glass-panel complexity-card">
+      <h3 class="panel-title">Space Complexity — O(n²)</h3>
+      <p>Two n×n holographic tables — one for minimum cost, one for the winning split — store every sub-chain result exactly once so it is fused, never recomputed.</p>
+      <div class="memo-illustration">
+        <div class="memo-cell memo-hit">CACHE HIT</div>
+        <div class="memo-arrow">→</div>
+        <div class="memo-cell memo-reuse">REUSED</div>
+        <div class="memo-arrow">→</div>
+        <div class="memo-cell memo-skip">RECOMPUTE SKIPPED</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= APPLICATIONS ================= -->
+<section id="applications" class="section">
+  <div class="section-head">
+    <div class="section-eyebrow">DEPLOYMENT</div>
+    <h2>Real World Applications</h2>
+    <p>Matrix chain optimization powers systems far beyond the reactor core.</p>
+  </div>
+  <div class="apps-grid">
+    <div class="app-card"><span class="app-icon">⚙️</span>Compiler Optimization</div>
+    <div class="app-card"><span class="app-icon">🗄️</span>Database Query Processing</div>
+    <div class="app-card"><span class="app-icon">🧠</span>Artificial Intelligence</div>
+    <div class="app-card"><span class="app-icon">📈</span>Machine Learning</div>
+    <div class="app-card"><span class="app-icon">🧮</span>Tensor Operations</div>
+    <div class="app-card"><span class="app-icon">🎮</span>Graphics Engines</div>
+    <div class="app-card"><span class="app-icon">🤖</span>Robotics</div>
+    <div class="app-card"><span class="app-icon">🔬</span>Scientific Computing</div>
+    <div class="app-card"><span class="app-icon">☁️</span>Cloud Computing</div>
+    <div class="app-card"><span class="app-icon">🖥️</span>GPU Optimization</div>
+  </div>
+</section>
+
+<!-- ================= ABOUT ================= -->
+<section id="about" class="section section-about">
+  <div class="section-head">
+    <div class="section-eyebrow">MISSION BRIEFING</div>
+    <h2>About the Reactor</h2>
+  </div>
+  <div class="glass-panel about-panel">
+    <p>AI Matrix Optimizer reframes the classic Matrix Chain Multiplication Dynamic Programming problem as a cinematic AI energy reactor. Every matrix becomes a module, every multiplication becomes a fusion, and every table cell becomes a decision the AI core commits to memory — so it is never solved twice.</p>
+    <p>Built with vanilla HTML5, CSS3, ES6 JavaScript and Chart.js — no frameworks, no backend, just an algorithm made visible.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>AI Matrix Optimizer</span>
+    <span>© <span id="year"></span> — Dynamic Programming Engine</span>
+  </div>
+</footer>
+
+<script src="chart.umd.js"></script>
+<script src="utils-dp.js"></script>
+<script src="visualizer.js"></script>
+<script src="charts.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
