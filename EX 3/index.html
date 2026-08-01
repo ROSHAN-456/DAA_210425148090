@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MST Visualizer — Kruskal &amp; Prim, step by step</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="logo" href="#home">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 28 28">
+            <circle cx="6" cy="7" r="3.4" />
+            <circle cx="22" cy="7" r="3.4" />
+            <circle cx="14" cy="22" r="3.4" />
+            <line x1="6" y1="7" x2="14" y2="22" />
+            <line x1="22" y1="7" x2="14" y2="22" />
+          </svg>
+        </span>
+        MST<span class="logo-accent">Visualizer</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#visualizer">Visualizer</a>
+        <a href="#comparison">Comparison</a>
+        <a href="#complexity">Complexity</a>
+        <a href="#about">About</a>
+      </nav>
+      <div class="nav-actions">
+        <button id="darkModeToggle" class="icon-btn" aria-label="Toggle light and dark theme" title="Toggle theme">
+          <svg class="icon-sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4.2" />
+            <g class="rays">
+              <line x1="12" y1="1.5" x2="12" y2="4.5" />
+              <line x1="12" y1="19.5" x2="12" y2="22.5" />
+              <line x1="1.5" y1="12" x2="4.5" y2="12" />
+              <line x1="19.5" y1="12" x2="22.5" y2="12" />
+              <line x1="4.4" y1="4.4" x2="6.5" y2="6.5" />
+              <line x1="17.5" y1="17.5" x2="19.6" y2="19.6" />
+              <line x1="4.4" y1="19.6" x2="6.5" y2="17.5" />
+              <line x1="17.5" y1="6.5" x2="19.6" y2="4.4" />
+            </g>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="home">
+    <svg class="hero-bg" id="heroBg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"></svg>
+    <div class="hero-content">
+      <p class="eyebrow">Graph theory, made visible</p>
+      <h1>Watch a <span class="grad-text">Minimum Spanning Tree</span> build itself, edge by edge</h1>
+      <p class="hero-sub">Visualize Kruskal's and Prim's algorithms step by step with animated graphs and live
+        explanations. Every accepted edge, every rejected cycle, narrated in plain language.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" data-scroll="#visualizer">Start Visualization</button>
+        <button class="btn btn-ghost" data-scroll="#about">Learn About MST</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VISUALIZER ============ -->
+  <section class="section" id="visualizer">
+    <div class="section-head">
+      <p class="eyebrow">01 — Visualizer</p>
+      <h2>Pick an algorithm, then watch it think</h2>
+    </div>
+
+    <!-- Algorithm selection -->
+    <div class="algo-cards">
+      <article class="algo-card">
+        <div class="algo-icon algo-icon-kruskal" aria-hidden="true">
+          <svg viewBox="0 0 40 40">
+            <line x1="6" y1="34" x2="34" y2="34" />
+            <line x1="6" y1="34" x2="14" y2="8" />
+            <line x1="34" y1="34" x2="26" y2="8" />
+            <line x1="14" y1="8" x2="26" y2="8" />
+          </svg>
+        </div>
+        <h3>Kruskal's Algorithm</h3>
+        <p>Sort every edge by weight, then add it to the forest unless it would close a cycle — using Union-Find to
+          check components instantly.</p>
+        <button class="btn btn-solid" id="runKruskalBtn">Run Kruskal</button>
+      </article>
+
+      <article class="algo-card">
+        <div class="algo-icon algo-icon-prim" aria-hidden="true">
+          <svg viewBox="0 0 40 40">
+            <circle cx="10" cy="20" r="4" />
+            <circle cx="26" cy="8" r="3" />
+            <circle cx="30" cy="30" r="3" />
+            <line x1="10" y1="20" x2="26" y2="8" />
+            <line x1="10" y1="20" x2="30" y2="30" />
+          </svg>
+        </div>
+        <h3>Prim's Algorithm</h3>
+        <p>Grow one tree outward from a starting vertex, always pulling in the cheapest edge to a vertex not yet reached
+          — using a priority queue.</p>
+        <button class="btn btn-solid" id="runPrimBtn">Run Prim</button>
+      </article>
+    </div>
+    <div class="compare-both-wrap">
+      <button class="btn btn-outline" id="compareBothBtn">Compare Both Algorithms</button>
+    </div>
+
+    <!-- Graph canvas -->
+    <div class="graph-card">
+      <div class="graph-toolbar">
+        <div class="graph-toolbar-title">Graph Canvas</div>
+        <div class="graph-toolbar-actions">
+          <button class="icon-btn" id="zoomInBtn" title="Zoom in" aria-label="Zoom in">+</button>
+          <button class="icon-btn" id="zoomOutBtn" title="Zoom out" aria-label="Zoom out">−</button>
+          <button class="icon-btn" id="resetViewBtn" title="Reset view" aria-label="Reset view">⤾</button>
+        </div>
+      </div>
+      <svg id="graphSvg" class="graph-svg"></svg>
+      <div class="legend">
+        <span class="legend-item"><i class="dot dot-accepted"></i> Selected edge</span>
+        <span class="legend-item"><i class="dot dot-current"></i> Current node</span>
+        <span class="legend-item"><i class="dot dot-rejected"></i> Rejected edge</span>
+        <span class="legend-item"><i class="dot dot-unvisited"></i> Not processed</span>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-bar">
+      <div class="controls-buttons">
+        <button class="icon-btn" id="prevStepBtn" title="Previous step">⏮</button>
+        <button class="icon-btn icon-btn-lg" id="playPauseBtn" title="Play / Pause">▶</button>
+        <button class="icon-btn" id="nextStepBtn" title="Next step">⏭</button>
+        <button class="icon-btn" id="restartBtn" title="Restart">⟲</button>
+      </div>
+      <div class="speed-control">
+        <label for="speedSlider">Speed</label>
+        <input type="range" id="speedSlider" min="0" max="3" step="1" value="1">
+        <span id="speedLabel">1x</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Live panels -->
+    <div class="panel-grid">
+      <div class="panel status-panel">
+        <h4>Live Status</h4>
+        <dl>
+          <div>
+            <dt>Algorithm</dt>
+            <dd id="statAlgo">—</dd>
+          </div>
+          <div>
+            <dt>Step</dt>
+            <dd id="statStep">—</dd>
+          </div>
+          <div>
+            <dt>Current vertex</dt>
+            <dd id="statVertex">—</dd>
+          </div>
+          <div>
+            <dt>Visited nodes</dt>
+            <dd id="statVisited">—</dd>
+          </div>
+          <div>
+            <dt>MST cost</dt>
+            <dd id="statCost">0</dd>
+          </div>
+          <div>
+            <dt>Execution status</dt>
+            <dd id="statExec">Idle</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="panel explain-panel">
+        <h4>Step Explanation</h4>
+        <p class="explain-title" id="explainTitle">Choose an algorithm above to begin.</p>
+        <p class="explain-body" id="explainBody">The graph, table, and priority queue will update live as each step
+          runs.</p>
+      </div>
+
+      <div class="panel data-panel" id="dataPanel">
+        <h4 id="dataPanelTitle">Edge Table</h4>
+        <div id="edgeTableWrap" class="edge-table-wrap">
+          <table class="edge-table" id="edgeTable">
+            <thead>
+              <tr>
+                <th>Edge</th>
+                <th>Weight</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="edgeTableBody"></tbody>
+          </table>
+        </div>
+        <div id="pqWrap" class="pq-wrap" hidden>
+          <p class="pq-caption">Priority Queue (weight, target vertex)</p>
+          <div class="pq-items" id="pqItems"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live stats mini row -->
+    <div class="mini-stats">
+      <div class="mini-stat"><span id="miniAccepted">0</span><label>Edges accepted</label></div>
+      <div class="mini-stat"><span id="miniRejected">0</span><label>Edges rejected</label></div>
+      <div class="mini-stat"><span id="miniRemaining">0</span><label>Edges remaining</label></div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-grid" id="resultsGrid" hidden>
+      <div class="result-card">
+        <span class="result-label">Algorithm used</span>
+        <span class="result-value" id="resAlgo">—</span>
+      </div>
+      <div class="result-card">
+        <span class="result-label">Total cost</span>
+        <span class="result-value" id="resCost">—</span>
+      </div>
+      <div class="result-card">
+        <span class="result-label">Edges selected</span>
+        <span class="result-value" id="resEdges">—</span>
+      </div>
+      <div class="result-card">
+        <span class="result-label">Execution time</span>
+        <span class="result-value" id="resTime">—</span>
+      </div>
+      <div class="result-card">
+        <span class="result-label">Time complexity</span>
+        <span class="result-value" id="resComplexity">—</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARISON ============ -->
+  <section class="section section-alt" id="comparison">
+    <div class="section-head">
+      <p class="eyebrow">02 — Comparison</p>
+      <h2>Two routes to the same tree</h2>
+    </div>
+    <div class="compare-cards">
+      <div class="compare-card">
+        <h3>Kruskal</h3>
+        <ul>
+          <li><span>Time complexity</span><strong>O(E log E)</strong></li>
+          <li><span>Space complexity</span><strong>O(V)</strong></li>
+          <li><span>Approach</span><strong>Edge-based</strong></li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h3>Prim</h3>
+        <ul>
+          <li><span>Time complexity</span><strong>O(E log V)</strong></li>
+          <li><span>Space complexity</span><strong>O(V)</strong></li>
+          <li><span>Approach</span><strong>Vertex-based</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Aspect</th>
+            <th>Kruskal</th>
+            <th>Prim</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Starts from</td>
+            <td>Cheapest edge, globally</td>
+            <td>A chosen starting vertex</td>
+          </tr>
+          <tr>
+            <td>Data structure</td>
+            <td>Union-Find (DSU)</td>
+            <td>Priority queue</td>
+          </tr>
+          <tr>
+            <td>Works well on</td>
+            <td>Sparse graphs</td>
+            <td>Dense graphs</td>
+          </tr>
+          <tr>
+            <td>Cycle handling</td>
+            <td>Explicit cycle check</td>
+            <td>Implicit — only unvisited vertices are reachable</td>
+          </tr>
+          <tr>
+            <td>Output on this graph</td>
+            <td>Total cost 39</td>
+            <td>Total cost 39</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ COMPLEXITY / STATISTICS ============ -->
+  <section class="section" id="complexity">
+    <div class="section-head">
+      <p class="eyebrow">03 — Complexity</p>
+      <h2>What the run actually cost</h2>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h4>Execution Time</h4>
+        <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+          <canvas id="execTimeChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Accepted vs. Rejected Edges</h4>
+        <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+          <canvas id="edgeSplitChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card chart-wide">
+        <h4>MST Cost Growth</h4>
+        <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+          <canvas id="costGrowthChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <p class="chart-hint" id="chartHint">Run Kruskal or Prim above to populate these charts with live data.</p>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="section section-alt" id="about">
+    <div class="section-head">
+      <p class="eyebrow">04 — About</p>
+      <h2>The idea behind the tree</h2>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-block">
+        <h3>What is a Minimum Spanning Tree?</h3>
+        <p>A Minimum Spanning Tree connects every vertex in a weighted graph using the smallest possible total edge
+          weight, with no cycles and exactly V−1 edges for V vertices. It's the cheapest way to keep everything
+          connected.</p>
+      </div>
+      <div class="about-block">
+        <h3>Kruskal's Algorithm</h3>
+        <p>Kruskal's builds the tree by considering edges globally, cheapest first, and skipping any edge that would
+          connect two vertices already in the same component — detected in near-constant time with Union-Find.</p>
+      </div>
+      <div class="about-block">
+        <h3>Prim's Algorithm</h3>
+        <p>Prim's builds the tree locally: starting from one vertex, it repeatedly extracts the cheapest edge leading to
+          a vertex outside the current tree, using a priority queue to always know what's cheapest next.</p>
+      </div>
+      <div class="about-block">
+        <h3>Where MSTs show up</h3>
+        <ul class="use-cases">
+          <li>Road network design</li>
+          <li>Internet routing backbones</li>
+          <li>Electric power distribution</li>
+          <li>Computer network layout</li>
+          <li>Water pipeline systems</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>MST Visualizer — built for learning graph algorithms, one edge at a time.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="utils.js"></script>
+  <script src="graph.js"></script>
+  <script src="kruskal.js"></script>
+  <script src="prim.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
