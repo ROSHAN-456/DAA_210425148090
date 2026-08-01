@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PathFinder AI — Interactive Shortest Path Visualizer</title>
+  <meta name="description"
+    content="Watch Dijkstra's Algorithm discover the shortest path step by step through animated graph exploration." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ============================= NAVBAR ============================= -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <span class="logo-dot">P</span>
+      <span>PathFinder <span style="color:var(--accent-2)">AI</span></span>
+    </div>
+
+    <ul class="nav-menu" id="navMenu">
+      <li><button class="nav-link active" data-page="home">Home</button></li>
+      <li><button class="nav-link" data-page="builder">Graph Builder</button></li>
+      <li><button class="nav-link" data-page="visualizer">Visualizer</button></li>
+      <li><button class="nav-link" data-page="statistics">Statistics</button></li>
+      <li><button class="nav-link" data-page="about">About</button></li>
+    </ul>
+
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark / light mode">🌙</button>
+      <button class="btn-icon nav-toggle-btn" id="navToggleBtn" title="Menu">☰</button>
+    </div>
+  </nav>
+
+  <!-- ============================= HOME / HERO ============================= -->
+  <section class="page active" id="page-home">
+    <div class="hero">
+      <svg class="hero-graph-bg" id="heroGraphBg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice"></svg>
+      <div class="hero-inner">
+        <div class="eyebrow"><span class="dot"></span> Dijkstra's Algorithm · Live Visualization</div>
+        <h1>Shortest Path <span class="grad">Visualizer</span></h1>
+        <p class="hero-sub">Watch Dijkstra's Algorithm discover the shortest path step by step through animated graph
+          exploration — priority queues, edge relaxation, and live distance tables, all in motion.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="heroStartBtn">▶ Start Visualization</button>
+          <button class="btn btn-ghost" id="heroLearnBtn">📖 Learn Algorithm</button>
+        </div>
+        <div class="stat-strip">
+          <div class="stat"><b id="statVertices">6</b><span>Vertices</span></div>
+          <div class="stat"><b id="statEdges">7</b><span>Edges</span></div>
+          <div class="stat"><b>O((V+E) log V)</b><span>Time Complexity</span></div>
+          <div class="stat"><b>100%</b><span>Client-Side</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= GRAPH BUILDER ============================= -->
+  <section class="page" id="page-builder">
+    <div class="container">
+      <div class="section-head">
+        <h2>Graph Builder</h2>
+        <p>Design your own network — add vertices, connect them with weighted edges, and shape the map Dijkstra will
+          explore.</p>
+      </div>
+
+      <div class="builder-grid">
+        <div class="builder-tools">
+          <div class="glass panel">
+            <div class="panel-title">
+              <h3>Build</h3><span class="tag">Live updates</span>
+            </div>
+            <button class="btn btn-ghost" id="btnAddVertex">➕ Add Vertex</button>
+
+            <div class="field-group">
+              <div class="field-block">
+                <label>From</label>
+                <select id="edgeFrom"></select>
+              </div>
+              <div class="field-block">
+                <label>To</label>
+                <select id="edgeTo"></select>
+              </div>
+              <div class="field-block field-block-weight">
+                <label>Weight</label>
+                <input type="number" id="edgeWeight" placeholder="Weight" min="1" value="1" />
+              </div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btnAddEdge" style="width:100%; justify-content:center;">Add
+              Edge</button>
+            <button class="btn btn-ghost" id="btnDeleteEdge">🗑 Delete Selected Edge</button>
+          </div>
+
+          <div class="glass panel">
+            <div class="panel-title">
+              <h3>Presets</h3><span class="tag">One click</span>
+            </div>
+            <div class="preset-tiles">
+              <button class="preset-tile" id="btnSampleGraph">
+                <span class="preset-tile-icon">📌</span>
+                <span class="preset-tile-label">Sample</span>
+              </button>
+              <button class="preset-tile" id="btnRandomGraph">
+                <span class="preset-tile-icon">🎲</span>
+                <span class="preset-tile-label">Random</span>
+              </button>
+              <button class="preset-tile preset-tile-danger" id="btnResetGraph">
+                <span class="preset-tile-icon">🔄</span>
+                <span class="preset-tile-label">Reset</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="glass panel" id="edgeInfoPanel" style="display:none;">
+            <div class="panel-title">
+              <h3>Selected Edge</h3>
+            </div>
+            <p id="edgeInfoText" style="font-family:var(--font-mono);font-size:0.85rem;"></p>
+          </div>
+        </div>
+
+        <div class="glass graph-canvas-wrap">
+          <svg id="builderSvg"></svg>
+          <div class="view-controls">
+            <button class="btn-icon" id="builderZoomIn" title="Zoom in">＋</button>
+            <button class="btn-icon" id="builderZoomOut" title="Zoom out">－</button>
+            <button class="btn-icon" id="builderResetView" title="Reset view">⤢</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= VISUALIZER ============================= -->
+  <section class="page" id="page-visualizer">
+    <div class="container">
+      <div class="section-head">
+        <h2>Dijkstra Visualization</h2>
+        <p>Select a source and destination, then watch every extraction, relaxation, and update animate in real time.
+        </p>
+      </div>
+
+      <div class="glass panel">
+        <div class="select-row">
+          <div class="select-block">
+            <label>Select Source Vertex</label>
+            <select id="sourceSelect"></select>
+          </div>
+          <div class="select-block">
+            <label>Select Destination Vertex</label>
+            <select id="destSelect"></select>
+          </div>
+          <button class="btn btn-primary" id="btnFindPath" style="align-self:flex-end;">🧭 Find Shortest Path</button>
+        </div>
+      </div>
+
+      <div class="viz-grid">
+        <div>
+          <div class="glass graph-canvas-wrap" style="margin-bottom:20px;">
+            <svg id="vizSvg"></svg>
+            <div class="view-controls">
+              <button class="btn-icon" id="vizZoomIn" title="Zoom in">＋</button>
+              <button class="btn-icon" id="vizZoomOut" title="Zoom out">－</button>
+              <button class="btn-icon" id="vizResetView" title="Reset view">⤢</button>
+            </div>
+          </div>
+
+          <div class="glass controls-bar">
+            <button class="btn-icon" id="btnPrev" title="Previous step">⏮</button>
+            <button class="btn-icon primary-icon" id="btnPlay" title="Play / Pause">▶</button>
+            <button class="btn-icon" id="btnNext" title="Next step">⏭</button>
+            <button class="btn-icon" id="btnRestart" title="Restart">🔄</button>
+            <div class="speed-control">
+              Speed
+              <input type="range" id="speedSlider" min="0" max="3" step="1" value="1" />
+              <span id="speedLabel">1x</span>
+            </div>
+            <div class="spacer"></div>
+            <span class="step-counter" id="stepCounter">Step 0 / 0</span>
+          </div>
+
+          <div class="glass panel" style="margin-top:20px;">
+            <div class="panel-title">
+              <h3>Step Explanation</h3>
+            </div>
+            <div class="explanation-box" id="explanationBox">Press “Find Shortest Path” to begin the animated
+              walkthrough.</div>
+          </div>
+
+          <div class="glass panel" id="resultPanel" style="margin-top:20px; display:none;">
+            <div class="panel-title">
+              <h3>Result</h3>
+            </div>
+            <div class="result-grid">
+              <div class="result-item">
+                <div class="label">Source</div>
+                <div class="value" id="resSource">—</div>
+              </div>
+              <div class="result-item">
+                <div class="label">Destination</div>
+                <div class="value" id="resDest">—</div>
+              </div>
+              <div class="result-item">
+                <div class="label">Shortest Distance</div>
+                <div class="value" id="resDist">—</div>
+              </div>
+              <div class="result-item">
+                <div class="label">Shortest Path</div>
+                <div class="value" id="resPath">—</div>
+              </div>
+              <div class="result-item">
+                <div class="label">Visited Nodes</div>
+                <div class="value" id="resVisited">—</div>
+              </div>
+              <div class="result-item">
+                <div class="label">Execution Time</div>
+                <div class="value" id="resTime">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="viz-side">
+          <div class="glass panel">
+            <div class="panel-title">
+              <h3>Live Status</h3>
+            </div>
+            <div class="status-grid">
+              <div class="status-item">
+                <div class="label">Step Type</div>
+                <div class="value" id="statStepType">—</div>
+              </div>
+              <div class="status-item">
+                <div class="label">Current Vertex</div>
+                <div class="value" id="statCurrent">—</div>
+              </div>
+              <div class="status-item">
+                <div class="label">Current Distance</div>
+                <div class="value" id="statCurrentDist">—</div>
+              </div>
+              <div class="status-item">
+                <div class="label">Status</div>
+                <div class="value" id="statStatus">Idle</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass panel">
+            <div class="panel-title">
+              <h3>Priority Queue</h3>
+            </div>
+            <div class="pq-list" id="pqList"><span class="pq-chip">empty</span></div>
+          </div>
+
+          <div class="glass panel">
+            <div class="panel-title">
+              <h3>Visited Vertices</h3>
+            </div>
+            <div class="visited-list" id="visitedList"><span class="pq-chip">none yet</span></div>
+          </div>
+
+          <div class="glass panel">
+            <div class="panel-title">
+              <h3>Distance Table</h3>
+            </div>
+            <table class="dist-table">
+              <thead>
+                <tr>
+                  <th>Vertex</th>
+                  <th>Distance</th>
+                  <th>Previous</th>
+                  <th>Visited</th>
+                </tr>
+              </thead>
+              <tbody id="distTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= STATISTICS ============================= -->
+  <section class="page" id="page-statistics">
+    <div class="container">
+      <div class="section-head">
+        <h2>Statistics</h2>
+        <p>A quantitative view of the most recent run — distances, growth of updates, and visitation coverage.</p>
+      </div>
+
+      <div class="glass panel" id="statsResultPanel" style="margin-bottom:30px; display:none;">
+        <div class="panel-title">
+          <h3>Algorithm Results Summary</h3>
+        </div>
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="label">Source</div>
+            <div class="value" id="statsResSource">—</div>
+          </div>
+          <div class="result-item">
+            <div class="label">Destination</div>
+            <div class="value" id="statsResDest">—</div>
+          </div>
+          <div class="result-item">
+            <div class="label">Shortest Distance</div>
+            <div class="value" id="statsResDist">—</div>
+          </div>
+          <div class="result-item">
+            <div class="label">Shortest Path</div>
+            <div class="value" id="statsResPath">—</div>
+          </div>
+          <div class="result-item">
+            <div class="label">Visited Nodes</div>
+            <div class="value" id="statsResVisited">—</div>
+          </div>
+          <div class="result-item">
+            <div class="label">Execution Time</div>
+            <div class="value" id="statsResTime">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="glass chart-card">
+          <div class="panel-title">
+            <h3>Shortest Distance to Each Vertex</h3>
+          </div>
+          <p class="chart-desc">Final shortest-path distance from the source to every vertex, taken from the last
+            completed run.</p>
+          <div class="chart-empty-state" id="barChartEmpty">
+            <div class="empty-icon">📊</div>
+            <div class="empty-title">No Data Yet</div>
+            <div class="empty-desc">Run Dijkstra's algorithm from the <strong>Visualizer</strong> tab to see a bar chart
+              of shortest distances to each vertex.</div>
+          </div>
+          <canvas id="barChart"></canvas>
+          <div class="chart-analysis" id="analysisBar"></div>
+        </div>
+        <div class="glass chart-card">
+          <div class="panel-title">
+            <h3>Distance Updates Over Time</h3>
+          </div>
+          <p class="chart-desc">Tracks how each vertex's tentative distance changed across every relaxation step during
+            the run.</p>
+          <div class="chart-empty-state" id="lineChartEmpty">
+            <div class="empty-icon">📈</div>
+            <div class="empty-title">Waiting for Run</div>
+            <div class="empty-desc">Execute a pathfinding run to visualize how tentative distances evolve through each
+              relaxation step.</div>
+          </div>
+          <canvas id="lineChart"></canvas>
+          <div class="chart-analysis" id="analysisLine"></div>
+        </div>
+        <div class="glass chart-card">
+          <div class="panel-title">
+            <h3>Visited vs Unvisited Nodes</h3>
+          </div>
+          <p class="chart-desc">Share of vertices the algorithm finalized versus those left unreached once it completed.
+          </p>
+          <div class="chart-empty-state" id="pieChartEmpty">
+            <div class="empty-icon">🍩</div>
+            <div class="empty-title">Explore First</div>
+            <div class="empty-desc">After the algorithm finishes, this pie chart will show how many nodes were visited
+              versus left unvisited.</div>
+          </div>
+          <canvas id="pieChart"></canvas>
+          <div class="chart-analysis" id="analysisPie"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= ABOUT ============================= -->
+  <section class="page" id="page-about">
+    <div class="container">
+      <div class="section-head">
+        <h2>About Dijkstra's Algorithm</h2>
+        <p>The classic single-source shortest path algorithm, powering everything from GPS navigation to internet
+          routing.</p>
+      </div>
+
+      <div class="about-grid">
+        <div class="glass about-card">
+          <div class="icon">🧭</div>
+          <h3>What is Dijkstra's Algorithm?</h3>
+          <p>A greedy algorithm that finds the shortest path from a single source vertex to every other vertex in a
+            weighted graph with non-negative edge weights, by always expanding the closest unvisited vertex next.</p>
+        </div>
+        <div class="glass about-card">
+          <div class="icon">📥</div>
+          <h3>How the Priority Queue Works</h3>
+          <p>Every vertex is tracked with its current best-known distance. The priority queue always hands over the
+            unvisited vertex with the smallest distance, guaranteeing that once a vertex is extracted, its shortest
+            distance is final.</p>
+        </div>
+        <div class="glass about-card">
+          <div class="icon">🔗</div>
+          <h3>What is Edge Relaxation?</h3>
+          <p>For every neighbour of the current vertex, the algorithm checks whether travelling through the current
+            vertex offers a shorter route. If so, it "relaxes" the edge by updating the neighbour's distance and
+            previous vertex.</p>
+        </div>
+        <div class="glass about-card">
+          <div class="icon">⏱</div>
+          <h3>Complexity</h3>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: O((V + E) log V)</div>
+            <div class="complexity-chip">Space: O(V)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top:56px;">
+        <h2>Real World Applications</h2>
+      </div>
+      <div class="applications-grid">
+        <div class="app-chip">🚗 Road Navigation</div>
+        <div class="app-chip">📍 GPS Systems</div>
+        <div class="app-chip">🗺 Google Maps</div>
+        <div class="app-chip">🌐 Network Routing</div>
+        <div class="app-chip">📡 Internet Packet Routing</div>
+        <div class="app-chip">✈ Flight Route Planning</div>
+        <div class="app-chip">📦 Delivery Optimization</div>
+        <div class="app-chip">🤖 Robot Navigation</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    PathFinder AI — Interactive Shortest Path Visualizer · Built with HTML5, CSS3, Vanilla JavaScript, SVG &amp;
+    Chart.js
+  </footer>
+
+  <div id="toast-host"></div>
+
+  <script src="chart.min.js"></script>
+  <script src="utils.js"></script>
+  <script src="graph.js"></script>
+  <script src="dijkstra.js"></script>
+  <script src="script.js"></script>
+  <script>
+    window.addEventListener('error', function (e) {
+      const host = document.getElementById('toast-host');
+      if (host) {
+        const t = document.createElement('div');
+        t.style.background = '#fb7185';
+        t.style.color = '#fff';
+        t.style.padding = '16px';
+        t.style.margin = '10px';
+        t.style.borderRadius = '8px';
+        t.style.pointerEvents = 'auto';
+        t.innerText = 'JS Error: ' + e.message + ' at line ' + e.lineno;
+        host.appendChild(t);
+      }
+    });
+  </script>
+</body>
+
+</html>
